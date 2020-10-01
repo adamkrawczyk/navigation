@@ -2,3 +2,5 @@
 *.project
 *.cproject
 
+global_planner/.vscode/c_cpp_properties.json
+global_planner/.vscode/settings.json

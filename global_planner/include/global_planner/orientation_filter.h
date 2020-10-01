@@ -38,30 +38,44 @@
 #define GLOBAL_PLANNER_ORIENTATION_FILTER_H
 #include <nav_msgs/Path.h>
 
-namespace global_planner {
+namespace global_planner
+{
 
-enum OrientationMode { NONE, FORWARD, INTERPOLATE, FORWARDTHENINTERPOLATE, BACKWARD, LEFTWARD, RIGHTWARD };
+    enum OrientationMode
+    {
+        NONE,
+        FORWARD,
+        INTERPOLATE,
+        FORWARDTHENINTERPOLATE,
+        BACKWARD,
+        LEFTWARD,
+        RIGHTWARD,
+        ADAPTIVE
+    };
 
-class OrientationFilter {
+    class OrientationFilter
+    {
     public:
         OrientationFilter() : omode_(NONE) {}
-    
-    
-        virtual void processPath(const geometry_msgs::PoseStamped& start,
-                                 std::vector<geometry_msgs::PoseStamped>& path);
-                                 
-        void setAngleBasedOnPositionDerivative(std::vector<geometry_msgs::PoseStamped>& path, int index);
-        void interpolate(std::vector<geometry_msgs::PoseStamped>& path, 
-                         int start_index, int end_index);
-                         
-        void setMode(OrientationMode new_mode){ omode_ = new_mode; }
-        void setMode(int new_mode){ setMode((OrientationMode) new_mode); }
 
-        void setWindowSize(size_t window_size){ window_size_ = window_size; }
+        virtual void processPath(const geometry_msgs::PoseStamped &start,
+                                 std::vector<geometry_msgs::PoseStamped> &path);
+
+        void setAngleBasedOnPositionDerivative(std::vector<geometry_msgs::PoseStamped> &path, int index);
+        void interpolate(std::vector<geometry_msgs::PoseStamped> &path,
+                         int start_index, int end_index);
+
+        void setMode(OrientationMode new_mode) { omode_ = new_mode; }
+        void setMode(int new_mode) { setMode((OrientationMode)new_mode); }
+
+        void setWindowSize(size_t window_size) { window_size_ = window_size; }
+        void setPathPoint(size_t path_point) { path_point_ = path_point; }
+
     protected:
         OrientationMode omode_;
         int window_size_;
-};
+        int path_point_;
+    };
 
 } //end namespace global_planner
 #endif
