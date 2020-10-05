@@ -202,7 +202,7 @@ namespace global_planner
             return true;
         }
         ROS_INFO("diff is: %f", diff);
-        if (diff < -0.174533) //-10deg
+        if (diff < -0.10 || diff > 2.1) // rad
         {
             return true; //forward
         }
