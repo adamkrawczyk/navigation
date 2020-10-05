@@ -64,17 +64,19 @@ namespace global_planner
         void setAngleBasedOnPositionDerivative(std::vector<geometry_msgs::PoseStamped> &path, int index);
         void interpolate(std::vector<geometry_msgs::PoseStamped> &path,
                          int start_index, int end_index);
+        bool adaptive(std::vector<geometry_msgs::PoseStamped> &path,
+                         int start_index, int rotation_index);
 
         void setMode(OrientationMode new_mode) { omode_ = new_mode; }
         void setMode(int new_mode) { setMode((OrientationMode)new_mode); }
 
         void setWindowSize(size_t window_size) { window_size_ = window_size; }
-        void setPathPoint(size_t path_point) { path_point_ = path_point; }
+        void setPathPoint(size_t rotation_point) { rotation_point_ = rotation_point; }
 
     protected:
         OrientationMode omode_;
         int window_size_;
-        int path_point_;
+        int rotation_point_;
     };
 
 } //end namespace global_planner

@@ -62,81 +62,76 @@ namespace global_planner
         switch (omode_)
         {
         case FORWARD:
+        {
             for (int i = 0; i < n - 1; i++)
             {
                 setAngleBasedOnPositionDerivative(path, i);
             }
             break;
+        }
         case BACKWARD:
+        {
             for (int i = 0; i < n - 1; i++)
             {
                 setAngleBasedOnPositionDerivative(path, i);
                 set_angle(&path[i], angles::normalize_angle(tf2::getYaw(path[i].pose.orientation) + M_PI));
             }
             break;
+        }
         case LEFTWARD:
+        {
             for (int i = 0; i < n - 1; i++)
             {
                 setAngleBasedOnPositionDerivative(path, i);
                 set_angle(&path[i], angles::normalize_angle(tf2::getYaw(path[i].pose.orientation) - M_PI_2));
             }
             break;
+        }
         case RIGHTWARD:
+        {
             for (int i = 0; i < n - 1; i++)
             {
                 setAngleBasedOnPositionDerivative(path, i);
                 set_angle(&path[i], angles::normalize_angle(tf2::getYaw(path[i].pose.orientation) + M_PI_2));
             }
             break;
+        }
         case INTERPOLATE:
+        {
             path[0].pose.orientation = start.pose.orientation;
             interpolate(path, 0, n - 1);
             break;
+        }
         case ADAPTIVE:
         {
-            // detect angle between base link and path 1.5m from base link if angle is [-90:90] go backwards other go front
-            ROS_INFO("Using Adaptive filter");
-            nav_msgs::Odometry odom_msg;
-            try
+            path[0].pose.orientation = start.pose.orientation;
+            if (rotation_point_ >= n)
             {
-                odom_msg = *(ros::topic::waitForMessage<nav_msgs::Odometry>("/odom", ros::Duration(10)));
+                rotation_point_ = n - 1;
             }
-            catch (...)
+            bool direction = adaptive(path, 0, rotation_point_);
+            if (direction)
             {
-                ROS_WARN("No odometry data");
-            }
-            double pose_x = odom_msg.pose.pose.position.x;
-            double pose_y = odom_msg.pose.pose.position.y;
+                ROS_INFO("Forward mode");
 
-            int path_point_acc = path_point_;
-            while (path_point_acc >= path.size())
-            {
-                path_point_acc = path_point_acc - 1;
-                ROS_WARN("Shrinking rotation point to: %d", path_point_acc);
-            }
-            double angle = (atan2(pose_y - path[path_point_acc].pose.position.y, pose_x - path[path_point_acc].pose.position.x) * 180 / 3.1415);
-            if (angle > 90.0)
-            {
-                // forward mode
-                ROS_INFO("Using forward mode");
-                for (int i = 1; i < n - 2; i++)
+                for (int i = 0; i < n - 1; i++)
                 {
                     setAngleBasedOnPositionDerivative(path, i);
                 }
             }
             else
             {
-                // backward mode
-                ROS_INFO("Using backward mode");
-                for (int i = 1; i < n - 2; i++)
+                ROS_INFO("Backward mode");
+                for (int i = 0; i < n - 1; i++)
                 {
                     setAngleBasedOnPositionDerivative(path, i);
                     set_angle(&path[i], angles::normalize_angle(tf2::getYaw(path[i].pose.orientation) + M_PI));
                 }
             }
+            break;
         }
-        break;
         case FORWARDTHENINTERPOLATE:
+        {
             for (int i = 0; i < n - 1; i++)
             {
                 setAngleBasedOnPositionDerivative(path, i);
@@ -157,6 +152,7 @@ namespace global_planner
             path[0].pose.orientation = start.pose.orientation;
             interpolate(path, i, n - 1);
             break;
+        }
         }
     }
 
@@ -185,6 +181,34 @@ namespace global_planner
         {
             double angle = start_yaw + increment * i;
             set_angle(&path[i], angle);
+        }
+    }
+
+    bool OrientationFilter::adaptive(std::vector<geometry_msgs::PoseStamped> &path,
+                                     int start_index, int rotation_index)
+    {
+        double diff {};
+        ROS_INFO("Using adaptive filter");
+        try
+        {
+            const double start_yaw = tf2::getYaw(path[start_index].pose.orientation),
+                         end_yaw = tf2::getYaw(path[rotation_index].pose.orientation);
+            ROS_INFO("calculating diff");
+            diff = angles::shortest_angular_distance(start_yaw, end_yaw);
+        }
+        catch (...)
+        {
+            ROS_WARN("Error in calculating angle using forward mode");
+            return true;
+        }
+        ROS_INFO("diff is: %f", diff);
+        if (diff < -0.174533) //-10deg
+        {
+            return true; //forward
+        }
+        else
+        {
+            return false; //backward
         }
     }
 
