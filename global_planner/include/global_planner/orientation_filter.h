@@ -37,6 +37,8 @@
 #ifndef GLOBAL_PLANNER_ORIENTATION_FILTER_H
 #define GLOBAL_PLANNER_ORIENTATION_FILTER_H
 #include <nav_msgs/Path.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 namespace global_planner
 {
@@ -56,7 +58,7 @@ namespace global_planner
     class OrientationFilter
     {
     public:
-        OrientationFilter() : omode_(NONE) {}
+        OrientationFilter() : omode_(NONE), tfBuffer(), tfListener(tfBuffer) {}
 
         virtual void processPath(const geometry_msgs::PoseStamped &start,
                                  std::vector<geometry_msgs::PoseStamped> &path);
@@ -65,7 +67,7 @@ namespace global_planner
         void interpolate(std::vector<geometry_msgs::PoseStamped> &path,
                          int start_index, int end_index);
         bool adaptive(std::vector<geometry_msgs::PoseStamped> &path,
-                         int start_index, int rotation_index);
+                      int start_index, int rotation_index);
 
         void setMode(OrientationMode new_mode) { omode_ = new_mode; }
         void setMode(int new_mode) { setMode((OrientationMode)new_mode); }
@@ -77,6 +79,8 @@ namespace global_planner
         OrientationMode omode_;
         int window_size_;
         int rotation_point_;
+        tf2_ros::Buffer tfBuffer;
+        tf2_ros::TransformListener tfListener;
     };
 
 } //end namespace global_planner
